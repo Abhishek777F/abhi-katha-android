@@ -108,6 +108,7 @@ at(SPLASH_MS,()=>{splash.classList.add('out');at(900,done)});
 function done(){
   running=false;splash.remove();
   window.dispatchEvent(new Event('welcome:done'));
+  if(window.AndroidWelcome && AndroidWelcome.onDone) AndroidWelcome.onDone();
   if(REDIRECT_URL)location.replace(REDIRECT_URL);
 }
 </script>

@@ -1,10 +1,9 @@
 package com.abhi.katha;
 
+import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkCapabilities;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -20,11 +19,8 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
-import androidx.activity.OnBackPressedCallback;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.WindowCompat;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
     private static final String HOME_URL = "https://abhishek777f.github.io/katha/";
     private static final int FILE_CHOOSER_REQUEST = 1001;
     private WebView webView;
@@ -34,7 +30,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         getWindow().setStatusBarColor(android.graphics.Color.rgb(245,239,249));
         getWindow().setNavigationBarColor(android.graphics.Color.rgb(5,150,105));
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
         webView = new WebView(this);
         webView.setBackgroundColor(android.graphics.Color.rgb(245,239,249));
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
@@ -101,12 +96,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         if (savedInstanceState == null) webView.loadUrl(HOME_URL); else webView.restoreState(savedInstanceState);
-
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override public void handleOnBackPressed() {
-                if (webView.canGoBack()) webView.goBack(); else finish();
-            }
-        });
     }
 
     private boolean routeUrl(String value) {
@@ -123,6 +112,10 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "No app found to open this link.", Toast.LENGTH_SHORT).show();
         }
         return true;
+    }
+
+    @Override public void onBackPressed() {
+        if (webView != null && webView.canGoBack()) webView.goBack(); else super.onBackPressed();
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {

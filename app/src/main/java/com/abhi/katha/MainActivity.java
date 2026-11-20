@@ -72,7 +72,7 @@ public class MainActivity extends Activity {
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
-        settings.setSupportMultipleWindows(false);
+        settings.setSupportMultipleWindows(true);
         settings.setLoadsImagesAutomatically(true);
         settings.setMediaPlaybackRequiresUserGesture(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
@@ -98,6 +98,28 @@ public class MainActivity extends Activity {
         });
 
         webView.setWebChromeClient(new WebChromeClient() {
+            @Override public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, android.os.Message resultMsg) {
+                final WebView popup = new WebView(MainActivity.this);
+                WebSettings popupSettings = popup.getSettings();
+                popupSettings.setJavaScriptEnabled(true);
+                popupSettings.setDomStorageEnabled(true);
+                popup.setWebViewClient(new WebViewClient() {
+                    @Override public boolean shouldOverrideUrlLoading(WebView child, WebResourceRequest request) {
+                        handlePopupUrl(request.getUrl().toString(), popup);
+                        return true;
+                    }
+                    @Override public boolean shouldOverrideUrlLoading(WebView child, String url) {
+                        handlePopupUrl(url, popup);
+                        return true;
+                    }
+                });
+                root.addView(popup, new FrameLayout.LayoutParams(1, 1));
+                WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+                transport.setWebView(popup);
+                resultMsg.sendToTarget();
+                return true;
+            }
+
             @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
@@ -268,17 +290,76 @@ public class MainActivity extends Activity {
         return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 
+    private void handlePopupUrl(String value, WebView popup) {
+        if (value == null || value.equals("about:blank")) return;
+        if (!routeUrl(value) && webView != null) webView.loadUrl(value);
+        root.removeView(popup);
+        popup.stopLoading();
+        popup.destroy();
+    }
+
+    private boolean openWhatsApp(Uri uri) {
+        String[] packages = {"com.whatsapp", "com.whatsapp.w4b"};
+        for (String packageName : packages) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                intent.setPackage(packageName);
+                startActivity(intent);
+                return true;
+            } catch (ActivityNotFoundException ignored) { }
+        }
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, uri));
+            return true;
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "WhatsApp is not installed. Please install WhatsApp and try again.", Toast.LENGTH_LONG).show();
+            return false;
+        }
+    }
+
     private boolean routeUrl(String value) {
         Uri uri = Uri.parse(value);
         String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase();
-        if (scheme.equals("https") || scheme.equals("http")) {
-            String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
-            if (host.equals("abhishek777f.github.io") || host.endsWith(".github.io")) return false;
-            try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); } catch (ActivityNotFoundException ignored) { }
+
+        if (scheme.equals("whatsapp")) return openWhatsApp(uri);
+
+        if (scheme.equals("intent")) {
+            try {
+                Intent intent = Intent.parseUri(value, Intent.URI_INTENT_SCHEME);
+                String fallback = intent.getStringExtra("browser_fallback_url");
+                try {
+                    startActivity(intent);
+                } catch (ActivityNotFoundException e) {
+                    if (fallback != null && !fallback.isEmpty()) {
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(fallback)));
+                    } else {
+                        Toast.makeText(this, "No app found to open this link.", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            } catch (Exception e) {
+                Toast.makeText(this, "This link could not be opened.", Toast.LENGTH_SHORT).show();
+            }
             return true;
         }
+
+        if (scheme.equals("https") || scheme.equals("http")) {
+            String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
+            if (host.equals("wa.me") || host.equals("api.whatsapp.com") || host.equals("web.whatsapp.com")) {
+                return openWhatsApp(uri);
+            }
+            if (host.equals("abhishek777f.github.io") || host.endsWith(".github.io")) return false;
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, uri));
+            } catch (ActivityNotFoundException e) {
+                Toast.makeText(this, "No app found to open this link.", Toast.LENGTH_SHORT).show();
+            }
+            return true;
+        }
+
         if (scheme.equals("about") || scheme.equals("blob") || scheme.equals("data")) return false;
-        try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); } catch (ActivityNotFoundException e) {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, uri));
+        } catch (ActivityNotFoundException e) {
             Toast.makeText(this, "No app found to open this link.", Toast.LENGTH_SHORT).show();
         }
         return true;

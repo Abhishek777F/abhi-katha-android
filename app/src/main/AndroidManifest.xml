@@ -4,6 +4,8 @@
     <application
         android:allowBackup="false"
         android:label="Abhi Katha"
+        android:icon="@drawable/ic_launcher"
+        android:roundIcon="@drawable/ic_launcher"
         android:usesCleartextTraffic="false"
         android:theme="@style/AppTheme"
         android:hardwareAccelerated="true">

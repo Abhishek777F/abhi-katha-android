@@ -2,23 +2,14 @@ package com.abhi.katha;
 
 import android.app.Activity;
 import android.app.DownloadManager;
-import android.animation.ObjectAnimator;
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
-import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.webkit.CookieManager;
 import android.webkit.DownloadListener;
 import android.webkit.URLUtil;
@@ -30,9 +21,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
@@ -41,7 +29,6 @@ public class MainActivity extends Activity {
     private static final int PAGE_BACKGROUND = Color.rgb(245, 239, 249);
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
-    private final Handler handler = new Handler(Looper.getMainLooper());
     private FrameLayout root;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
@@ -151,110 +138,26 @@ public class MainActivity extends Activity {
             }
         });
 
-        if (savedInstanceState == null) webView.loadUrl(HOME_URL); else webView.restoreState(savedInstanceState);
-        showWelcomeAnimation();
+        if (savedInstanceState == null) {
+            loadWelcomeScreen();
+        } else {
+            webView.restoreState(savedInstanceState);
+        }
     }
 
-    private void showWelcomeAnimation() {
-        final FrameLayout splash = new FrameLayout(this);
-        GradientDrawable bg = new GradientDrawable(
-            GradientDrawable.Orientation.TL_BR,
-            new int[]{Color.rgb(5, 7, 36), Color.rgb(23, 5, 48), Color.rgb(66, 5, 48)}
-        );
-        splash.setBackground(bg);
-
-        LinearLayout content = new LinearLayout(this);
-        content.setGravity(Gravity.CENTER);
-        content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(dp(30), dp(24), dp(30), dp(24));
-        FrameLayout.LayoutParams contentParams = new FrameLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
-        );
-        splash.addView(content, contentParams);
-
-        FrameLayout logoStage = new FrameLayout(this);
-        logoStage.setBackgroundColor(Color.TRANSPARENT);
-        LinearLayout.LayoutParams stageParams = new LinearLayout.LayoutParams(dp(250), dp(250));
-        stageParams.gravity = Gravity.CENTER;
-        stageParams.bottomMargin = dp(34);
-        content.addView(logoStage, stageParams);
-
-        ImageView logo = new ImageView(this);
-        logo.setImageResource(R.drawable.abhi_katha_logo);
-        logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        FrameLayout.LayoutParams logoParams = new FrameLayout.LayoutParams(dp(242), dp(242), Gravity.CENTER);
-        logoStage.addView(logo, logoParams);
-
-        TextView welcome = new TextView(this);
-        welcome.setText("WELCOME TO");
-        welcome.setTextColor(Color.rgb(100, 205, 255));
-        welcome.setTextSize(13);
-        welcome.setLetterSpacing(0.32f);
-        welcome.setGravity(Gravity.CENTER);
-        content.addView(welcome);
-
-        TextView title = new TextView(this);
-        title.setText("ABHI KATHA");
-        title.setTextColor(Color.WHITE);
-        title.setTextSize(30);
-        title.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
-        title.setLetterSpacing(0.08f);
-        title.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        titleParams.topMargin = dp(8);
-        content.addView(title, titleParams);
-
-        TextView subtitle = new TextView(this);
-        subtitle.setText("Your Khata. Always within reach.");
-        subtitle.setTextColor(Color.rgb(213, 202, 235));
-        subtitle.setTextSize(15);
-        subtitle.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        subtitleParams.topMargin = dp(12);
-        content.addView(subtitle, subtitleParams);
-
-        TextView footer = new TextView(this);
-        footer.setText("SMART  •  SIMPLE  •  SECURE");
-        footer.setTextColor(Color.rgb(177, 151, 218));
-        footer.setTextSize(11);
-        footer.setLetterSpacing(0.18f);
-        footer.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams footerParams = new LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        footerParams.topMargin = dp(54);
-        content.addView(footer, footerParams);
-
-        root.addView(splash, new FrameLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
-        ));
-
-        ObjectAnimator turn = ObjectAnimator.ofFloat(logo, View.ROTATION_Y, -18f, 18f, -18f);
-        turn.setDuration(1900);
-        turn.setRepeatCount(ObjectAnimator.INFINITE);
-        turn.setInterpolator(new AccelerateDecelerateInterpolator());
-        turn.start();
-
-        ObjectAnimator floatLogo = ObjectAnimator.ofFloat(logoStage, View.TRANSLATION_Y, dp(7), -dp(7), dp(7));
-        floatLogo.setDuration(2300);
-        floatLogo.setRepeatCount(ObjectAnimator.INFINITE);
-        floatLogo.setInterpolator(new AccelerateDecelerateInterpolator());
-        floatLogo.start();
-
-        splash.setAlpha(0f);
-        splash.animate().alpha(1f).setDuration(420).start();
-        handler.postDelayed(() -> splash.animate().alpha(0f).setDuration(500)
-            .setListener(new AnimatorListenerAdapter() {
-                @Override public void onAnimationEnd(Animator animation) {
-                    turn.cancel();
-                    floatLogo.cancel();
-                    root.removeView(splash);
-                }
-            }).start(), 2400);
+    private void loadWelcomeScreen() {
+        try (java.io.InputStream input = getAssets().open("welcome-splash.html");
+             java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream()) {
+            byte[] buffer = new byte[4096];
+            int count;
+            while ((count = input.read(buffer)) != -1) {
+                output.write(buffer, 0, count);
+            }
+            String splashHtml = new String(output.toByteArray(), java.nio.charset.StandardCharsets.UTF_8);
+            webView.loadDataWithBaseURL(HOME_URL, splashHtml, "text/html", "UTF-8", null);
+        } catch (Exception error) {
+            webView.loadUrl(HOME_URL);
+        }
     }
 
     private void suppressInstallPromotion() {
@@ -384,7 +287,6 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
-        handler.removeCallbacksAndMessages(null);
         if (fileCallback != null) fileCallback.onReceiveValue(null);
         if (webView != null) { webView.stopLoading(); webView.setWebChromeClient(null); webView.setWebViewClient(null); webView.destroy(); }
         super.onDestroy();

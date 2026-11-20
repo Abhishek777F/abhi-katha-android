@@ -151,20 +151,16 @@ public class MainActivity extends Activity {
         splash.addView(content, contentParams);
 
         FrameLayout logoStage = new FrameLayout(this);
-        GradientDrawable halo = new GradientDrawable();
-        halo.setShape(GradientDrawable.OVAL);
-        halo.setColor(Color.argb(34, 130, 73, 255));
-        halo.setStroke(dp(2), Color.argb(100, 92, 188, 255));
-        logoStage.setBackground(halo);
-        LinearLayout.LayoutParams stageParams = new LinearLayout.LayoutParams(dp(190), dp(190));
+        logoStage.setBackgroundColor(Color.TRANSPARENT);
+        LinearLayout.LayoutParams stageParams = new LinearLayout.LayoutParams(dp(250), dp(250));
         stageParams.gravity = Gravity.CENTER;
         stageParams.bottomMargin = dp(34);
         content.addView(logoStage, stageParams);
 
         ImageView logo = new ImageView(this);
-        logo.setImageResource(R.drawable.ic_launcher);
+        logo.setImageResource(R.drawable.abhi_katha_logo);
         logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        FrameLayout.LayoutParams logoParams = new FrameLayout.LayoutParams(dp(142), dp(142), Gravity.CENTER);
+        FrameLayout.LayoutParams logoParams = new FrameLayout.LayoutParams(dp(242), dp(242), Gravity.CENTER);
         logoStage.addView(logo, logoParams);
 
         TextView welcome = new TextView(this);

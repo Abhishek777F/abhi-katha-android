@@ -34,19 +34,20 @@ public class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().setStatusBarColor(PAGE_BACKGROUND);
-        getWindow().setNavigationBarColor(PAGE_BACKGROUND);
-        if (android.os.Build.VERSION.SDK_INT >= 26) {
-            getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-            );
-        } else {
-            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-        }
+        getWindow().setStatusBarColor(Color.rgb(4, 2, 26));
+        getWindow().setNavigationBarColor(Color.rgb(4, 2, 26));
+        getWindow().getDecorView().setSystemUiVisibility(
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_FULLSCREEN
+            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        );
 
         root = new FrameLayout(this);
         webView = new WebView(this);
-        webView.setBackgroundColor(PAGE_BACKGROUND);
+        webView.setBackgroundColor(Color.rgb(4, 2, 26));
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         root.addView(webView, new FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
@@ -144,6 +145,7 @@ public class MainActivity extends Activity {
             hideSystemBarsForWelcome();
             loadWelcomeScreen();
         } else {
+            restoreSystemBarsAfterWelcome();
             webView.restoreState(savedInstanceState);
         }
     }
@@ -165,6 +167,7 @@ public class MainActivity extends Activity {
         runOnUiThread(() -> {
             getWindow().setStatusBarColor(PAGE_BACKGROUND);
             getWindow().setNavigationBarColor(PAGE_BACKGROUND);
+            if (webView != null) webView.setBackgroundColor(PAGE_BACKGROUND);
             getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
                 | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
@@ -196,33 +199,18 @@ public class MainActivity extends Activity {
 
     private void suppressInstallPromotion() {
         String script = "(function(){"
-            + "function hideNativeInstallCard(){"
-            + "var nodes=document.querySelectorAll('body *');"
-            + "for(var i=0;i<nodes.length;i++){"
-            + "var el=nodes[i];"
-            + "if(el.children.length>0)continue;"
-            + "var txt=(el.textContent||'').trim().toLowerCase();"
-            + "if(txt!=='your khata, always within reach.')continue;"
-            + "var p=el;"
-            + "for(var j=0;j<7&&p&&p!==document.body;j++,p=p.parentElement){"
-            + "var t=(p.innerText||'').toLowerCase();"
-            + "if(t.indexOf('install app')!==-1&&t.indexOf('my katha')!==-1){"
-            + "p.style.setProperty('display','none','important');"
-            + "p.setAttribute('data-abhi-katha-install-hidden','true');"
-            + "break;"
-            + "}"
-            + "}"
-            + "}"
-            + "}"
-            + "hideNativeInstallCard();"
-            + "if(!window.__abhiKathaInstallObserver){"
-            + "window.__abhiKathaInstallObserver=new MutationObserver(hideNativeInstallCard);"
-            + "window.__abhiKathaInstallObserver.observe(document.documentElement,{childList:true,subtree:true});"
-            + "}"
+            + "if(window.__abhiKathaInstallGuard)return;"
+            + "window.__abhiKathaInstallGuard=true;"
+            + "window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();});"
+            + "function hideInstallCard(){"
+            + "var all=document.querySelectorAll('body *');var target=null;var best=100000;"
+            + "for(var i=0;i<all.length;i++){var el=all[i];var txt=(el.innerText||el.textContent||'').replace(/\\s+/g,' ').trim().toLowerCase();"
+            + "if(txt.length>0&&txt.length<1200&&txt.indexOf('install app')!==-1&&txt.indexOf('your khata')!==-1&&(txt.indexOf('quick access')!==-1||txt.indexOf('app experience')!==-1)){if(txt.length<best){best=txt.length;target=el;}}}"
+            + "if(target){target.style.setProperty('display','none','important');target.style.setProperty('visibility','hidden','important');target.setAttribute('data-abhi-katha-install-hidden','true');}}"
+            + "hideInstallCard();if(!window.__abhiKathaInstallObserver){window.__abhiKathaInstallObserver=new MutationObserver(hideInstallCard);window.__abhiKathaInstallObserver.observe(document.documentElement,{childList:true,subtree:true,characterData:true});}"
             + "})();";
         webView.evaluateJavascript(script, null);
     }
-
     private int dp(float value) {
         return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
